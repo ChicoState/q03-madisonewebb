@@ -14,7 +14,6 @@ class GuesserTest : public ::testing::Test
 		virtual void TearDown(){} //clean up after each test, (before destructor)
 };
 
-// Tests for match function
 TEST(GuesserTest, exact_match) {
     Guesser guesser("test");
     ASSERT_TRUE(guesser.match("test"));
@@ -22,10 +21,18 @@ TEST(GuesserTest, exact_match) {
 
 TEST(GuesserTest, three_wrong_guesses_enable_lock) {
     Guesser guesser("test");
-    guesser.match("tast"); // distance = 1
-    guesser.match("tost"); // distance = 1
-    guesser.match("tist"); // distance = 1
-    ASSERT_FALSE(guesser.match("test")); // now locked
+    guesser.match("tast");
+    guesser.match("tost");
+    guesser.match("tist"); // 3rd wrong guesses, secret locked
+    ASSERT_FALSE(guesser.match("test"));
+}
+
+TEST(GuesserTest, guess_after_zero_guesses_remaining) {
+    Guesser guesser("test");
+    guesser.match("tast");
+    guesser.match("tost");
+    guesser.match("tist"); // 0 guessest left
+    ASSERT_FALSE(guesser.match("test"));
 }
 
 TEST(GuesserTest, detects_brute_force) {
@@ -34,11 +41,15 @@ TEST(GuesserTest, detects_brute_force) {
     ASSERT_FALSE(guesser.match("test"));
 }
 
-// Tests for remaining + match function
-TEST(GuesserTest, wrong_guess_within_distance_decrements_remaining) {
+TEST(GuesserTest, check_remaining_after_one_failure) {
     Guesser guesser("test");
-    guesser.match("tast");  // 1 char different, distance = 1
+    guesser.match("tast");
     ASSERT_EQ(2, guesser.remaining());
+}
+
+TEST(GuesserTest, initial_remaining_is_three) {
+    Guesser guesser("test");
+    ASSERT_EQ(3, guesser.remaining());
 }
 
 TEST(GuesserTest, correct_guess_resets_remaining_to_three) {
@@ -48,7 +59,8 @@ TEST(GuesserTest, correct_guess_resets_remaining_to_three) {
     ASSERT_EQ(3, guesser.remaining());
 }
 
-TEST(GuesserTest, initial_remaining_is_three) {
+TEST(GuesserTest, remaining_decrements_even_when_locked) {
     Guesser guesser("test");
-    ASSERT_EQ(3, guesser.remaining());
+    guesser.match("bruteforce");
+    ASSERT_EQ(2, guesser.remaining());
 }
